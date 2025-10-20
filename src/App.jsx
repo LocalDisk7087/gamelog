@@ -1,85 +1,80 @@
-// Gamelog App - Main Component
-// Handles all application state and renders the UI
+// Gamelog App - application to track video games backlog and status
 
 import { useState } from 'react';
 import './App.css';
 
-// Initial data to populate the list on first load
-// This will be replaced by a backend API call later.
+// Initial data to populate the list on first load. Probably, have to be replaced with the API call to backend later
 const initialGames = [
+  // Description is just a placeholder for now, either replaced by rating or removed later
   {
     id: 1,
     name: 'Gears of War',
-    platform: '♦ A',
-    description: 'Menu description.',
+    platform: '♦ PC',
+    description: 'Game description',
     status: 'backlog',
   },
   {
     id: 2,
     name: 'Halo',
-    platform: '♦ A',
-    description: 'Menu description.',
+    platform: '♦ Xbox Series X',
+    description: 'Game description',
     status: 'next-to-play',
   },
   {
     id: 3,
     name: 'Dead Space',
-    platform: '♦ A',
-    description: 'Menu description.',
+    platform: '♦ PC',
+    description: 'Game description',
     status: 'playing',
   },
   {
     id: 4,
     name: 'Warcraft 3',
-    platform: '♦ A',
-    description: 'Menu description.',
+    platform: '♦ PC',
+    description: 'Game description',
     status: 'completed',
   },
 ];
 
 function App() {
-  // === STATE MANAGEMENT ===
+  // STATE MANAGEMENT
   // State for the main list of games
   const [games, setGames] = useState(initialGames);
 
-  // State for the controlled form inputs
+  // Controlled form inputs, probably should add more like rating
   const [gameName, setGameName] = useState('');
   const [platform, setPlatform] = useState('');
   const [status, setStatus] = useState('backlog'); // Default to 'backlog'
 
-  // === EVENT HANDLERS ===
-  // Handles the submission of the "Add New Game" form
+  // EVENT HANDLERS
+  // This one should Handle the submission of the "Add New Game" form
   const handleAddGame = (event) => {
-    // Prevent the default form submission (which causes a page reload)
     event.preventDefault();
 
     // Create a new game object from the form's state
     const newGame = {
-      id: Date.now(), // Use timestamp as a simple unique ID for now
+      id: Date.now(),
       name: gameName,
       platform: platform,
-      description: 'New game description.', // Placeholder description
+      description: 'New game description.', // As mentioned before, probably will be either removed or replaced. Now it's like a placeholder
       status: status,
     };
 
     // Update the games list state, adding the new game to the top
     setGames([newGame, ...games]);
-
-    // Reset the form fields to be empty
     setGameName('');
     setPlatform('');
     setStatus('backlog');
   };
 
-  // === DATA FILTERING ===
+  // DATA FILTERING
   // Filter the main games list into separate arrays for each column
-  // This makes rendering the columns much cleaner.
   const backlogGames = games.filter((game) => game.status === 'backlog');
   const nextToPlayGames = games.filter((game) => game.status === 'next-to-play');
   const playingGames = games.filter((game) => game.status === 'playing');
   const completedGames = games.filter((game) => game.status === 'completed');
 
-  // === JSX RENDER ===
+  // JSX (or HTML) render part
   return (
     <div className="container">
       <div className="header">

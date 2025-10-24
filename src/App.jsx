@@ -1,11 +1,14 @@
-// Gamelog App - application to track video games backlog and status
+// Gamelog App, or application to track video games backlog
+// I've adjusted it to use react-bootstrap components for better styling
 
 import { useState } from 'react';
 import './App.css';
 
-// Initial data to populate the list on first load. Probably, have to be replaced with the API call to backend later
+// Import all the components we need from react-bootstrap
+import { Container, Row, Col, Card, Form, Button } from 'react-bootstrap';
+
+// Initial data, later it will come from the API (backend)
 const initialGames = [
-  // Description is just a placeholder for now, either replaced by rating or removed later
   {
     id: 1,
     name: 'Gears of War',
@@ -36,166 +39,219 @@ const initialGames = [
   },
 ];
 
+// A small helper function to get the right CSS class for card colors
+const getCardClassName = (status) => {
+  switch (status) {
+    case 'backlog':
+      return 'card-backlog';
+    case 'next-to-play':
+      return 'card-next-to-play';
+    case 'playing':
+      return 'card-playing';
+    case 'completed':
+      return 'card-completed';
+    default:
+      return ''; // default class
+  }
+};
+
+
 function App() {
   // STATE MANAGEMENT
-  // State for the main list of games
+  // The list of games
   const [games, setGames] = useState(initialGames);
 
-  // Controlled form inputs, probably should add more like rating
+  // State for the form inputs
   const [gameName, setGameName] = useState('');
   const [platform, setPlatform] = useState('');
-  const [status, setStatus] = useState('backlog'); // Default to 'backlog'
+  const [status, setStatus] = useState('backlog'); // default to 'backlog'
 
   // EVENT HANDLERS
-  // This one should Handle the submission of the "Add New Game" form
+  // This function runs when the form is submitted
   const handleAddGame = (event) => {
+    // prevent page reload
     event.preventDefault();
 
-    // Create a new game object from the form's state
+    // Create a new game object
     const newGame = {
-      id: Date.now(),
+      id: Date.now(), // temporary id
       name: gameName,
       platform: platform,
-      description: 'New game description.', // As mentioned before, probably will be either removed or replaced. Now it's like a placeholder
+      description: 'New game description.', // just a placeholder for now
       status: status,
     };
 
-    // Update the games list state, adding the new game to the top
+    // Update the games list in the state
     setGames([newGame, ...games]);
+    
+    // Clear the form inputs
     setGameName('');
     setPlatform('');
     setStatus('backlog');
   };
 
   // DATA FILTERING
-  // Filter the main games list into separate arrays for each column
+  // Filter games into 4 columns
   const backlogGames = games.filter((game) => game.status === 'backlog');
   const nextToPlayGames = games.filter((game) => game.status === 'next-to-play');
   const playingGames = games.filter((game) => game.status === 'playing');
   const completedGames = games.filter((game) => game.status === 'completed');
 
-  // JSX (or HTML) render part
+  // JSX RENDER
   return (
-    <div className="container">
-      <div className="header">
-        <h1>My Gamelog</h1>
+    // <Container> is the main bootstrap div, it centers content (need remove this comment later)
+    <Container className="my-4">
+      {/* Header */}
+      <div className="text-center mb-4">
+        <h1 className="header-title">Track your gaming journey</h1>
       </div>
 
       {/* --- Add Game Form --- */}
-      <div className="form-container" style={{ display: 'block' }}>
-        <form onSubmit={handleAddGame}>
-          <div className="form-group">
-            <label htmlFor="game-name">Game name</label>
-            <input
-              type="text"
-              id="game-name"
-              placeholder="e.g., Cyberpunk 2077"
-              value={gameName}
-              onChange={(e) => setGameName(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="platform">Platform</label>
-            <input
-              type="text"
-              id="platform"
-              placeholder="e.g., PC, PS5"
-              value={platform}
-              onChange={(e) => setPlatform(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="status">Status</label>
-            <select
-              id="status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              <option value="backlog">Backlog</option>
-              <option value="next-to-play">Next to Play</option>
-              <option value="playing">Playing</option>
-              <option value="completed">Completed</option>
-            </select>
-          </div>
-          <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-            Add to Gamelog
-          </button>
-        </form>
-      </div>
+      <Card className="mb-4 mx-auto" style={{ maxWidth: '500px' }}>
+        <Card.Body>
+          {/* react-bootstrap Form */}
+          <Form onSubmit={handleAddGame}>
+            <Form.Group className="mb-3" controlId="game-name">
+              <Form.Label>Game name</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="e.g., Cyberpunk 2077"
+                value={gameName}
+                onChange={(e) => setGameName(e.target.value)}
+                required
+              />
+            </Form.Group>
 
-      {/* --- Game Grid (Dynamically Rendered) --- */}
-      <div className="games-grid">
-        {/* Backlog Column */}
-        <div className="game-column">
-          <h2>Backlog</h2>
+            <Form.Group className="mb-3" controlId="platform">
+              <Form.Label>Platform</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="e.g., PC, PS5"
+                value={platform}
+                onChange={(e) => setPlatform(e.target.value)}
+                required
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="status">
+              <Form.Label>Status</Form.Label>
+              <Form.Select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="backlog">Backlog</option>
+                <option value="next-to-play">Next to Play</option>
+                <option value="playing">Playing</option>
+                <option value="completed">Completed</option>
+              </Form.Select>
+            </Form.Group>
+            
+            <Button variant="dark" type="submit" className="w-100">
+              Add to Gamelog
+            </Button>
+          </Form>
+        </Card.Body>
+      </Card>
+
+      {/* --- Games Grid --- */}
+      {/* Use <Row> and <Col> to create the grid */}
+      <Row>
+        {/* Column: Backlog */}
+        {/* lg={3} means 4 cols on large screens, md={6} means 2 on medium (remove later this note) */}
+        <Col md={6} lg={3} className="mb-3">
+          <h2 className="column-header">Backlog</h2>
           {backlogGames.map((game) => (
-            <div key={game.id} className="game-card backlog">
-              <div className="game-status">Status</div>
-              <div className="game-status-value">Backlog</div>
-              <div className="game-title">
-                <span className="game-title-icon">⭐</span>
-                <span className="game-title-text">{game.name}</span>
-              </div>
-              <div className="game-description">{game.description}</div>
-              <div className="game-platform">{game.platform}</div>
-            </div>
+            // Wrap each game in a <Card>
+            <Card key={game.id} className={`mb-3 ${getCardClassName(game.status)}`}>
+              <Card.Body>
+                {/* Use bootstrap utility classes to style text */}
+                <div className="text-muted" style={{ fontSize: '0.75rem' }}>Status</div>
+                <div className="fw-bold mb-2">Backlog</div>
+                <Card.Title className="h6">
+                    <span className="me-2">⭐</span>
+                    {game.name}
+                </Card.Title>
+                <Card.Text className="text-muted small">
+                    {game.description}
+                </Card.Text>
+              </Card.Body>
+              <Card.Footer className="text-muted small">
+                {game.platform}
+              </Card.Footer>
+            </Card>
           ))}
-        </div>
+        </Col>
 
-        {/* Next to Play Column */}
-        <div className="game-column">
-          <h2>Next to Play</h2>
+        {/* Column: Next to Play */}
+        <Col md={6} lg={3} className="mb-3">
+          <h2 className="column-header">Next to Play</h2>
           {nextToPlayGames.map((game) => (
-            <div key={game.id} className="game-card next-to-play">
-              <div className="game-status">Status</div>
-              <div className="game-status-value">Next to Play</div>
-              <div className="game-title">
-                <span className="game-title-icon">⭐</span>
-                <span className="game-title-text">{game.name}</span>
-              </div>
-              <div className="game-description">{game.description}</div>
-              <div className="game-platform">{game.platform}</div>
-            </div>
+            <Card key={game.id} className={`mb-3 ${getCardClassName(game.status)}`}>
+              <Card.Body>
+                <div className="text-muted" style={{ fontSize: '0.75rem' }}>Status</div>
+                <div className="fw-bold mb-2">Next to Play</div>
+                <Card.Title className="h6">
+                    <span className="me-2">⭐</span>
+                    {game.name}
+                </Card.Title>
+                <Card.Text className="text-muted small">
+                    {game.description}
+                </Card.Text>
+              </Card.Body>
+              <Card.Footer className="text-muted small">
+                {game.platform}
+              </Card.Footer>
+            </Card>
           ))}
-        </div>
+        </Col>
 
-        {/* Playing Column */}
-        <div className="game-column">
-          <h2>Playing</h2>
+        {/* Column: Playing */}
+        <Col md={6} lg={3} className="mb-3">
+          <h2 className="column-header">Playing</h2>
           {playingGames.map((game) => (
-            <div key={game.id} className="game-card playing">
-              <div className="game-status">Status</div>
-              <div className="game-status-value">Playing</div>
-              <div className="game-title">
-                <span className="game-title-icon">⭐</span>
-                <span className="game-title-text">{game.name}</span>
-              </div>
-              <div className="game-description">{game.description}</div>
-              <div className="game-platform">{game.platform}</div>
-            </div>
+            <Card key={game.id} className={`mb-3 ${getCardClassName(game.status)}`}>
+              <Card.Body>
+                <div className="text-muted" style={{ fontSize: '0.75rem' }}>Status</div>
+                <div className="fw-bold mb-2">Playing</div>
+                <Card.Title className="h6">
+                    <span className="me-2">⭐</span>
+                    {game.name}
+                </Card.Title>
+                <Card.Text className="text-muted small">
+                    {game.description}
+                </Card.Text>
+              </Card.Body>
+              <Card.Footer className="text-muted small">
+                {game.platform}
+              </Card.Footer>
+            </Card>
           ))}
-        </div>
+        </Col>
 
-        {/* Completed Column */}
-        <div className="game-column">
-          <h2>Completed</h2>
+        {/* Column: Completed */}
+        <Col md={6} lg={3} className="mb-3">
+          <h2 className="column-header">Completed</h2>
           {completedGames.map((game) => (
-            <div key={game.id} className="game-card completed">
-              <div className="game-status">Status</div>
-              <div className="game-status-value">Completed</div>
-              <div className="game-title">
-                <span className="game-title-icon">⭐</span>
-                <span className="game-title-text">{game.name}</span>
-              </div>
-              <div className="game-description">{game.description}</div>
-              <div className="game-platform">{game.platform}</div>
-            </div>
+            <Card key={game.id} className={`mb-3 ${getCardClassName(game.status)}`}>
+              <Card.Body>
+                <div className="text-muted" style={{ fontSize: '0.75rem' }}>Status</div>
+                <div className="fw-bold mb-2">Completed</div>
+                <Card.Title className="h6">
+                    <span className="me-2">⭐</span>
+                    {game.name}
+                </Card.Title>
+                <Card.Text className="text-muted small">
+                    {game.description}
+                </Card.Text>
+              </Card.Body>
+              <Card.Footer className="text-muted small">
+                {game.platform}
+              </Card.Footer>
+            </Card>
           ))}
-        </div>
-      </div>
-    </div>
+        </Col>
+      </Row>
+    </Container>
   );
 }
 

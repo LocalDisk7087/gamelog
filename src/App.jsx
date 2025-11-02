@@ -1,45 +1,16 @@
-// Gamelog App, or application to track video games backlog
-// I've adjusted it to use react-bootstrap components for better styling
+// Gamelog App, or application to track video games backlog. Now with backend integration!
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
+import axios from 'axios'; 
 
 // Import all the components we need from react-bootstrap
 import { Container, Row, Col, Card, Form, Button } from 'react-bootstrap';
 
-// Initial data, later it will come from the API (backend)
-const initialGames = [
-  {
-    id: 1,
-    name: 'Gears of War',
-    platform: '♦ PC',
-    description: 'Game description',
-    status: 'backlog',
-  },
-  {
-    id: 2,
-    name: 'Halo',
-    platform: '♦ Xbox Series X',
-    description: 'Game description',
-    status: 'next-to-play',
-  },
-  {
-    id: 3,
-    name: 'Dead Space',
-    platform: '♦ PC',
-    description: 'Game description',
-    status: 'playing',
-  },
-  {
-    id: 4,
-    name: 'Warcraft 3',
-    platform: '♦ PC',
-    description: 'Game description',
-    status: 'completed',
-  },
-];
+// Since I don't have a server yet, I run the backend locally on port 5001
+const API_URL = 'http://localhost:5001/api/games';
 
-// A small helper function to get the right CSS class for card colors
+// Helper function for card colors for CSS
 const getCardClassName = (status) => {
   switch (status) {
     case 'backlog':
@@ -51,46 +22,75 @@ const getCardClassName = (status) => {
     case 'completed':
       return 'card-completed';
     default:
-      return ''; // default class
+      return '';
   }
 };
 
 
 function App() {
   // STATE MANAGEMENT
-  // The list of games
-  const [games, setGames] = useState(initialGames);
+  // No default game list any more, only an empty array
+  const [games, setGames] = useState([]);
 
-  // State for the form inputs
-  const [gameName, setGameName] = useState('');
+  // Form state is the same
+  const [gameName, setGameName] =useState('');
   const [platform, setPlatform] = useState('');
-  const [status, setStatus] = useState('backlog'); // default to 'backlog'
+  const [status, setStatus] = useState('backlog');
+
+  // DATA FETCHING 
+  // This 'useEffect' hook runs ONCE when the component first loads
+  useEffect(() => {
+    // sync function inside to fetch data
+    const fetchGames = async () => {
+      try {
+        // Use axios to make a GET request to our backend
+        const response = await axios.get(API_URL);
+        // 'response.data' contains our list of games
+        setGames(response.data);
+      } catch (err) {
+        // Log an error if something goes wrong
+        console.error('Error fetching games:', err);
+      }
+    };
+
+    fetchGames(); // Call the function
+  }, []); // The empty array [] means "run this only once"
 
   // EVENT HANDLERS
-  // This function runs when the form is submitted
-  const handleAddGame = (event) => {
-    // prevent page reload
+  // This function now sends data to the backend
+  const handleAddGame = async (event) => {
     event.preventDefault();
 
-    // Create a new game object
+    // 1. Create a new game object
     const newGame = {
-      id: Date.now(), // temporary id
       name: gameName,
       platform: platform,
-      description: 'New game description.', // just a placeholder for now
       status: status,
     };
 
-    // Update the games list in the state
-    setGames([newGame, ...games]);
-    
-    // Clear the form inputs
-    setGameName('');
-    setPlatform('');
-    setStatus('backlog');
+    try {
+      // 2. Send the new game to the backend API
+      // axios.post(url, data)
+      const response = await axios.post(API_URL, newGame);
+
+      // 'response.data' is the new game object *saved by the DB*
+      // (it includes the _id, createdAt, etc.)
+      
+      // 3. Update our frontend state
+      // Add the new game to the *top* of the list
+      setGames([response.data, ...games]);
+      
+      // 4. Clear the form
+      setGameName('');
+      setPlatform('');
+      setStatus('backlog');
+
+    } catch (err) {
+      console.error('Error creating game:', err);
+    }
   };
 
-  // DATA FILTERING
+  // DATA FILTERING 
   // Filter games into 4 columns
   const backlogGames = games.filter((game) => game.status === 'backlog');
   const nextToPlayGames = games.filter((game) => game.status === 'next-to-play');
@@ -99,17 +99,15 @@ function App() {
 
   // JSX RENDER
   return (
-    // <Container> is the main bootstrap div, it centers content (need remove this comment later)
     <Container className="my-4">
-      {/* Header */}
       <div className="text-center mb-4">
         <h1 className="header-title">Track your gaming journey</h1>
       </div>
 
-      {/* --- Add Game Form --- */}
+      {/* Add Game Form */}
+      {/* Changed the 'onSubmit' logic */}
       <Card className="mb-4 mx-auto" style={{ maxWidth: '500px' }}>
         <Card.Body>
-          {/* react-bootstrap Form */}
           <Form onSubmit={handleAddGame}>
             <Form.Group className="mb-3" controlId="game-name">
               <Form.Label>Game name</Form.Label>
@@ -154,17 +152,15 @@ function App() {
       </Card>
 
       {/* --- Games Grid --- */}
-      {/* Use <Row> and <Col> to create the grid */}
       <Row>
+        {/* MongoDB uses '_id', not 'id', have to change the code */}
+        
         {/* Column: Backlog */}
-        {/* lg={3} means 4 cols on large screens, md={6} means 2 on medium (remove later this note) */}
         <Col md={6} lg={3} className="mb-3">
           <h2 className="column-header">Backlog</h2>
           {backlogGames.map((game) => (
-            // Wrap each game in a <Card>
-            <Card key={game.id} className={`mb-3 ${getCardClassName(game.status)}`}>
+            <Card key={game._id} className={`mb-3 ${getCardClassName(game.status)}`}>
               <Card.Body>
-                {/* Use bootstrap utility classes to style text */}
                 <div className="text-muted" style={{ fontSize: '0.75rem' }}>Status</div>
                 <div className="fw-bold mb-2">Backlog</div>
                 <Card.Title className="h6">
@@ -172,11 +168,12 @@ function App() {
                     {game.name}
                 </Card.Title>
                 <Card.Text className="text-muted small">
-                    {game.description}
+                    {/* We'll use platform here instead of description for now */}
+                    {game.platform}
                 </Card.Text>
               </Card.Body>
               <Card.Footer className="text-muted small">
-                {game.platform}
+                {/* Probably, We can put platform in footer or body */}
               </Card.Footer>
             </Card>
           ))}
@@ -186,7 +183,7 @@ function App() {
         <Col md={6} lg={3} className="mb-3">
           <h2 className="column-header">Next to Play</h2>
           {nextToPlayGames.map((game) => (
-            <Card key={game.id} className={`mb-3 ${getCardClassName(game.status)}`}>
+            <Card key={game._id} className={`mb-3 ${getCardClassName(game.status)}`}>
               <Card.Body>
                 <div className="text-muted" style={{ fontSize: '0.75rem' }}>Status</div>
                 <div className="fw-bold mb-2">Next to Play</div>
@@ -195,12 +192,9 @@ function App() {
                     {game.name}
                 </Card.Title>
                 <Card.Text className="text-muted small">
-                    {game.description}
+                    {game.platform}
                 </Card.Text>
               </Card.Body>
-              <Card.Footer className="text-muted small">
-                {game.platform}
-              </Card.Footer>
             </Card>
           ))}
         </Col>
@@ -209,7 +203,7 @@ function App() {
         <Col md={6} lg={3} className="mb-3">
           <h2 className="column-header">Playing</h2>
           {playingGames.map((game) => (
-            <Card key={game.id} className={`mb-3 ${getCardClassName(game.status)}`}>
+            <Card key={game._id} className={`mb-3 ${getCardClassName(game.status)}`}>
               <Card.Body>
                 <div className="text-muted" style={{ fontSize: '0.75rem' }}>Status</div>
                 <div className="fw-bold mb-2">Playing</div>
@@ -218,12 +212,9 @@ function App() {
                     {game.name}
                 </Card.Title>
                 <Card.Text className="text-muted small">
-                    {game.description}
+                    {game.platform}
                 </Card.Text>
               </Card.Body>
-              <Card.Footer className="text-muted small">
-                {game.platform}
-              </Card.Footer>
             </Card>
           ))}
         </Col>
@@ -232,7 +223,7 @@ function App() {
         <Col md={6} lg={3} className="mb-3">
           <h2 className="column-header">Completed</h2>
           {completedGames.map((game) => (
-            <Card key={game.id} className={`mb-3 ${getCardClassName(game.status)}`}>
+            <Card key={game._id} className={`mb-3 ${getCardClassName(game.status)}`}>
               <Card.Body>
                 <div className="text-muted" style={{ fontSize: '0.75rem' }}>Status</div>
                 <div className="fw-bold mb-2">Completed</div>
@@ -241,12 +232,9 @@ function App() {
                     {game.name}
                 </Card.Title>
                 <Card.Text className="text-muted small">
-                    {game.description}
+                    {game.platform}
                 </Card.Text>
               </Card.Body>
-              <Card.Footer className="text-muted small">
-                {game.platform}
-              </Card.Footer>
             </Card>
           ))}
         </Col>

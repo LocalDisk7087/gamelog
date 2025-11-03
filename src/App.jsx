@@ -1,11 +1,11 @@
-// Gamelog App, or application to track video games backlog. Now with backend integration!
+// Gamelog App, or application to track video games backlog. Now with backend integration and full CRUD functionality!
 
 import { useState, useEffect } from 'react';
 import './App.css';
 import axios from 'axios'; 
 
-// Import all the components we need from react-bootstrap
-import { Container, Row, Col, Card, Form, Button } from 'react-bootstrap';
+// Import all the components we need from react-bootstrap, added new components
+import { Container, Row, Col, Card, Form, Button, Modal, ButtonGroup, Stack } from 'react-bootstrap';
 
 // Since I don't have a server yet, I run the backend locally on port 5001
 const API_URL = 'http://localhost:5001/api/games';
@@ -26,18 +26,32 @@ const getCardClassName = (status) => {
   }
 };
 
-
 function App() {
   // STATE MANAGEMENT
-  // No default game list any more, only an empty array
   const [games, setGames] = useState([]);
 
-  // Form state is the same
+  // Form state ifor adding a new game
   const [gameName, setGameName] =useState('');
   const [platform, setPlatform] = useState('');
   const [status, setStatus] = useState('backlog');
 
-  // DATA FETCHING 
+  // NEW STATE for Edit Modal
+  // State to control if the modal is open or closed
+
+  const [showModal, setShowModal] = useState(false);
+
+  // State to hold the game we are currently editing
+  const [currentGame, setCurrentGame] = useState(null);
+  // State to hold the data *inside* the edit form
+  const [editFormData, setEditFormData] = useState({
+
+    name: '',
+    platform: '',
+    status: '',
+
+  });
+
+  // DATA FETCHING (GET)
   // This 'useEffect' hook runs ONCE when the component first loads
   useEffect(() => {
     // sync function inside to fetch data
@@ -52,12 +66,11 @@ function App() {
         console.error('Error fetching games:', err);
       }
     };
+    fetchGames();
+  }, []);
 
-    fetchGames(); // Call the function
-  }, []); // The empty array [] means "run this only once"
-
-  // EVENT HANDLERS
-  // This function now sends data to the backend
+  // EVENT HANDLERS (CREATE, UPDATE, DELETE)
+  // Create (POST)
   const handleAddGame = async (event) => {
     event.preventDefault();
 
@@ -77,7 +90,7 @@ function App() {
       // (it includes the _id, createdAt, etc.)
       
       // 3. Update our frontend state
-      // Add the new game to the *top* of the list
+      // Add the new game to the top of the list
       setGames([response.data, ...games]);
       
       // 4. Clear the form
@@ -88,6 +101,76 @@ function App() {
     } catch (err) {
       console.error('Error creating game:', err);
     }
+  };
+
+  // DELETE (DELETE)
+  const handleDelete = async (gameId) => {
+    // Should I add a confirm box if we want (need to think)? If yes, window.confirm - a hint for future
+
+    try {
+      // Send DELETE request to /api/games/:id
+      await axios.delete(`${API_URL}/${gameId}`);
+    
+      // Update the frontend state
+      // Filter out the deleted game
+      setGames(games.filter((game) => game._id !== gameId));
+    } catch (err) {
+      console.error('Error deleting game:', err);
+    }
+
+  };
+
+  // UPDATE (PUT)
+  // This runs when we "Save Changes" in the modal
+
+  const handleUpdate = async (event) => {
+    event.preventDefault();
+    // Get the ID from the game we are editing
+    const gameId = currentGame._id;
+    try {
+
+      // Send PUT request to /api/games/:id
+      // The body is our 'editFormData'
+      const response = await axios.put(`${API_URL}/${gameId}`, editFormData);
+      // 'response.data' is the *updated* game from the server
+      const updatedGame = response.data;
+      // Update the 'games' array in our state
+      setGames(games.map((game) => 
+        // Find the game we edited...
+        game._id === updatedGame._id 
+          // ...and replace it with the updated version
+          ? updatedGame 
+          // ...otherwise, keep the old one
+          : game
+      ));
+      handleCloseModal();
+    } catch (err) {
+      console.error('Error updating game:', err);
+    }
+  };
+
+  // MODAL HELPER FUNCTIONS 
+  // This runs when we type in the EDIT modal form
+
+  const handleEditFormChange = (event) => {
+    const { name, value } = event.target;
+    setEditFormData({
+      ...editFormData,
+      [name]: value,
+    });
+  };
+
+  // Runs when we click the "Edit" button on a card
+  const handleShowModal = (game) => {
+    setCurrentGame(game); // Remember *which* game we're editing
+    setEditFormData(game); // Pre-fill the modal form with that game's data
+    setShowModal(true); // Open the modal
+  };
+
+  // This runs when we click "Close" or "Cancel"
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setCurrentGame(null); // Forget which game we were editing
   };
 
   // DATA FILTERING 
@@ -105,7 +188,6 @@ function App() {
       </div>
 
       {/* Add Game Form */}
-      {/* Changed the 'onSubmit' logic */}
       <Card className="mb-4 mx-auto" style={{ maxWidth: '500px' }}>
         <Card.Body>
           <Form onSubmit={handleAddGame}>
@@ -153,8 +235,7 @@ function App() {
 
       {/* --- Games Grid --- */}
       <Row>
-        {/* MongoDB uses '_id', not 'id', have to change the code */}
-        
+        {/* Map over all 4 columns */}
         {/* Column: Backlog */}
         <Col md={6} lg={3} className="mb-3">
           <h2 className="column-header">Backlog</h2>
@@ -172,8 +253,12 @@ function App() {
                     {game.platform}
                 </Card.Text>
               </Card.Body>
-              <Card.Footer className="text-muted small">
-                {/* Probably, We can put platform in footer or body */}
+             {/* Card Footer with Buttons */}
+              <Card.Footer>
+                <ButtonGroup size="sm" className="w-100">
+                  <Button variant="outline-dark" onClick={() => handleShowModal(game)}>Edit</Button>
+                  <Button variant="outline-danger" onClick={() => handleDelete(game._id)}>Delete</Button>
+                </ButtonGroup>
               </Card.Footer>
             </Card>
           ))}
@@ -195,6 +280,14 @@ function App() {
                     {game.platform}
                 </Card.Text>
               </Card.Body>
+               {/* Card Footer with Buttons */}
+
+              <Card.Footer>
+                <ButtonGroup size="sm" className="w-100">
+                  <Button variant="outline-dark" onClick={() => handleShowModal(game)}>Edit</Button>
+                  <Button variant="outline-danger" onClick={() => handleDelete(game._id)}>Delete</Button>
+                </ButtonGroup>
+              </Card.Footer>
             </Card>
           ))}
         </Col>
@@ -215,6 +308,13 @@ function App() {
                     {game.platform}
                 </Card.Text>
               </Card.Body>
+               {/* Card Footer with Buttons, probably, there is a better way to handle this instead of adding into each column */}
+              <Card.Footer>
+                <ButtonGroup size="sm" className="w-100">
+                  <Button variant="outline-dark" onClick={() => handleShowModal(game)}>Edit</Button>
+                  <Button variant="outline-danger" onClick={() => handleDelete(game._id)}>Delete</Button>
+                </ButtonGroup>
+              </Card.Footer>
             </Card>
           ))}
         </Col>
@@ -235,10 +335,73 @@ function App() {
                     {game.platform}
                 </Card.Text>
               </Card.Body>
+                {/* Card Footer with Buttons*/}
+              <Card.Footer>
+                <ButtonGroup size="sm" className="w-100">
+                  <Button variant="outline-dark" onClick={() => handleShowModal(game)}>Edit</Button>
+                  <Button variant="outline-danger" onClick={() => handleDelete(game._id)}>Delete</Button>
+                </ButtonGroup>
+              </Card.Footer>
             </Card>
           ))}
         </Col>
       </Row>
+      {/* Edit Game Modal */}
+      {/* This component is hidden by default (show={showModal}) */}
+      {currentGame && (
+        <Modal show={showModal} onHide={handleCloseModal} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Edit Game</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {/* Should use 'handleUpdate' for submission */}
+            <Form onSubmit={handleUpdate}>
+              <Form.Group className="mb-3" controlId="edit-game-name">
+                <Form.Label>Game name</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="name" // 'name' must match the key in editFormData
+                  value={editFormData.name}
+                  onChange={handleEditFormChange}
+                  required
+                />
+              </Form.Group>
+              <Form.Group className="mb-3" controlId="edit-platform">
+                <Form.Label>Platform</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="platform"
+                  value={editFormData.platform}
+                  onChange={handleEditFormChange}
+                  required
+                />
+              </Form.Group>
+              <Form.Group className="mb-3" controlId="edit-status">
+                <Form.Label>Status</Form.Label>
+                <Form.Select
+                  name="status"
+                  value={editFormData.status}
+                  onChange={handleEditFormChange}
+                >
+                  <option value="backlog">Backlog</option>
+                  <option value="next-to-play">Next to Play</option>
+                  <option value="playing">Playing</option>
+                  <option value="completed">Completed</option>
+                </Form.Select>
+              </Form.Group>
+              {/* Buttons at the bottom of the modal */}
+              <Stack direction="horizontal" gap={2}>
+                <Button variant="secondary" onClick={handleCloseModal}>
+                  Cancel
+                </Button>
+                <Button variant="primary" type="submit" className="ms-auto">
+                  Save Changes
+                </Button>
+              </Stack>
+            </Form>
+          </Modal.Body>
+        </Modal>
+      )}
     </Container>
   );
 }

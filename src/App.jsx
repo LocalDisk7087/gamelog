@@ -35,12 +35,10 @@ function App() {
   const [platform, setPlatform] = useState('');
   const [status, setStatus] = useState('backlog');
 
-  // NEW STATE for Edit Modal
+  // STATE for Edit Modal
   // State to control if the modal is open or closed
 
-  const [showModal, setShowModal] = useState(false);
-
-  // State to hold the game we are currently editing
+  const [showEditModal, setShowEditModal] = useState(false);
   const [currentGame, setCurrentGame] = useState(null);
   // State to hold the data *inside* the edit form
   const [editFormData, setEditFormData] = useState({
@@ -50,6 +48,13 @@ function App() {
     status: '',
 
   });
+
+  // State for ADD Modal
+  // This will control "Add Game" popup
+  const [showAddModal, setShowAddModal] = useState(false);
+  // Helper functions to open/close ADD modal
+  const handleCloseAddModal = () => setShowAddModal(false);
+  const handleShowAddModal = () => setShowAddModal(true);
 
   // DATA FETCHING (GET)
   // This 'useEffect' hook runs ONCE when the component first loads
@@ -98,6 +103,9 @@ function App() {
       setPlatform('');
       setStatus('backlog');
 
+      // Close the modal after adding, should add based on the doc (re-read later)
+      handleCloseAddModal();
+
     } catch (err) {
       console.error('Error creating game:', err);
     }
@@ -136,20 +144,17 @@ function App() {
       const updatedGame = response.data;
       // Update the 'games' array in our state
       setGames(games.map((game) => 
-        // Find the game we edited...
         game._id === updatedGame._id 
-          // ...and replace it with the updated version
           ? updatedGame 
-          // ...otherwise, keep the old one
           : game
       ));
-      handleCloseModal();
+      handleCloseEditModal();
     } catch (err) {
       console.error('Error updating game:', err);
     }
   };
 
-  // MODAL HELPER FUNCTIONS 
+  // EDIT MODAL HELPER FUNCTIONS 
   // This runs when we type in the EDIT modal form
 
   const handleEditFormChange = (event) => {
@@ -161,15 +166,15 @@ function App() {
   };
 
   // Runs when we click the "Edit" button on a card
-  const handleShowModal = (game) => {
+  const handleShowEditModal = (game) => {
     setCurrentGame(game); // Remember *which* game we're editing
     setEditFormData(game); // Pre-fill the modal form with that game's data
-    setShowModal(true); // Open the modal
+    setShowEditModal(true); // Open the modal
   };
 
   // This runs when we click "Close" or "Cancel"
-  const handleCloseModal = () => {
-    setShowModal(false);
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
     setCurrentGame(null); // Forget which game we were editing
   };
 
@@ -183,55 +188,18 @@ function App() {
   // JSX RENDER
   return (
     <Container className="my-4">
-      <div className="text-center mb-4">
-        <h1 className="header-title">Track your gaming journey</h1>
-      </div>
-
-      {/* Add Game Form */}
-      <Card className="mb-4 mx-auto" style={{ maxWidth: '500px' }}>
-        <Card.Body>
-          <Form onSubmit={handleAddGame}>
-            <Form.Group className="mb-3" controlId="game-name">
-              <Form.Label>Game name</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="e.g., Cyberpunk 2077"
-                value={gameName}
-                onChange={(e) => setGameName(e.target.value)}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="platform">
-              <Form.Label>Platform</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="e.g., PC, PS5"
-                value={platform}
-                onChange={(e) => setPlatform(e.target.value)}
-                required
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="status">
-              <Form.Label>Status</Form.Label>
-              <Form.Select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                <option value="backlog">Backlog</option>
-                <option value="next-to-play">Next to Play</option>
-                <option value="playing">Playing</option>
-                <option value="completed">Completed</option>
-              </Form.Select>
-            </Form.Group>
-            
-            <Button variant="dark" type="submit" className="w-100">
-              Add to Gamelog
-            </Button>
-          </Form>
-        </Card.Body>
-      </Card>
+        {/* Header */}
+      {/* Time to replace the old <h1> with a Button */}
+      <Stack direction="horizontal" className="mb-4">
+        <div>{/* Empty div pushes the button to the right */}</div>
+        <Button 
+          variant="light" 
+          onClick={handleShowAddModal} 
+          className="ms-auto"
+        >
+          Add a new game
+        </Button>
+      </Stack>
 
       {/* --- Games Grid --- */}
       <Row>
@@ -256,7 +224,7 @@ function App() {
              {/* Card Footer with Buttons */}
               <Card.Footer>
                 <ButtonGroup size="sm" className="w-100">
-                  <Button variant="outline-dark" onClick={() => handleShowModal(game)}>Edit</Button>
+                  <Button variant="outline-dark" onClick={() => handleShowEditModal(game)}>Edit</Button>
                   <Button variant="outline-danger" onClick={() => handleDelete(game._id)}>Delete</Button>
                 </ButtonGroup>
               </Card.Footer>
@@ -284,7 +252,7 @@ function App() {
 
               <Card.Footer>
                 <ButtonGroup size="sm" className="w-100">
-                  <Button variant="outline-dark" onClick={() => handleShowModal(game)}>Edit</Button>
+                  <Button variant="outline-dark" onClick={() => handleShowEditModal(game)}>Edit</Button>
                   <Button variant="outline-danger" onClick={() => handleDelete(game._id)}>Delete</Button>
                 </ButtonGroup>
               </Card.Footer>
@@ -311,7 +279,7 @@ function App() {
                {/* Card Footer with Buttons, probably, there is a better way to handle this instead of adding into each column */}
               <Card.Footer>
                 <ButtonGroup size="sm" className="w-100">
-                  <Button variant="outline-dark" onClick={() => handleShowModal(game)}>Edit</Button>
+                  <Button variant="outline-dark" onClick={() => handleShowEditModal(game)}>Edit</Button>
                   <Button variant="outline-danger" onClick={() => handleDelete(game._id)}>Delete</Button>
                 </ButtonGroup>
               </Card.Footer>
@@ -338,7 +306,7 @@ function App() {
                 {/* Card Footer with Buttons*/}
               <Card.Footer>
                 <ButtonGroup size="sm" className="w-100">
-                  <Button variant="outline-dark" onClick={() => handleShowModal(game)}>Edit</Button>
+                  <Button variant="outline-dark" onClick={() => handleShowEditModal(game)}>Edit</Button>
                   <Button variant="outline-danger" onClick={() => handleDelete(game._id)}>Delete</Button>
                 </ButtonGroup>
               </Card.Footer>
@@ -346,10 +314,58 @@ function App() {
           ))}
         </Col>
       </Row>
+
+ {/* Add Game Modal /}
+      {/* Add Game form is in this Modal now */}
+      <Modal show={showAddModal} onHide={handleCloseAddModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Add a New Game</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleAddGame}>
+            <Form.Group className="mb-3" controlId="game-name">
+              <Form.Label>Game name</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="e.g., Cyberpunk 2077"
+                value={gameName}
+                onChange={(e) => setGameName(e.g.target.value)}
+                required
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="platform">
+              <Form.Label>Platform</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="e.g., PC, PS5"
+                value={platform}
+                onChange={(e) => setPlatform(e.target.value)}
+                required
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="status">
+              <Form.Label>Status</Form.Label>
+              <Form.Select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="backlog">Backlog</option>
+                <option value="next-to-play">Next to Play</option>
+                <option value="playing">Playing</option>
+                <option value="completed">Completed</option>
+              </Form.Select>
+            </Form.Group>
+            <Button variant="dark" type="submit" className="w-100">
+              Add to Gamelog
+            </Button>
+          </Form>
+        </Modal.Body>
+      </Modal>
+
       {/* Edit Game Modal */}
-      {/* This component is hidden by default (show={showModal}) */}
+      {/* This component is hidden by default (show={showEditModal}) */}
       {currentGame && (
-        <Modal show={showModal} onHide={handleCloseModal} centered>
+        <Modal show={showEditModal} onHide={handleCloseEditModal} centered>
           <Modal.Header closeButton>
             <Modal.Title>Edit Game</Modal.Title>
           </Modal.Header>
@@ -360,7 +376,7 @@ function App() {
                 <Form.Label>Game name</Form.Label>
                 <Form.Control
                   type="text"
-                  name="name" // 'name' must match the key in editFormData
+                  name="name"
                   value={editFormData.name}
                   onChange={handleEditFormChange}
                   required
@@ -391,7 +407,7 @@ function App() {
               </Form.Group>
               {/* Buttons at the bottom of the modal */}
               <Stack direction="horizontal" gap={2}>
-                <Button variant="secondary" onClick={handleCloseModal}>
+                <Button variant="secondary" onClick={handleCloseEditModal}>
                   Cancel
                 </Button>
                 <Button variant="primary" type="submit" className="ms-auto">

@@ -9,7 +9,7 @@ import axios from 'axios';
 import { Container, Row, Col, Card, Form, Button, Modal, ButtonGroup, Stack } from 'react-bootstrap';
 
 // Since I don't have a server yet, I run the backend locally on port 5001
-const API_BASE_URL = 'http://localhost:5001';
+const API_BASE_URL = 'https://be-for-gamelog.onrender.com/';
 // Second URL os for games API
 const API_GAMES_URL = `${API_BASE_URL}/api/games`;
 

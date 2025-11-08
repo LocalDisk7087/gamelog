@@ -29,6 +29,7 @@ body {
 .card {
   background-color: rgba(255, 255, 255, 0.9) !important;
   border: none !important;
+  overflow: hidden;
 }
 
 /* Style for column headers (Backlog, Playing...) */

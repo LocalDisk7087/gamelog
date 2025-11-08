@@ -251,8 +251,9 @@ function App() {
                 {game.coverImage && (
                   <Card.Img 
                     variant="top" 
-                    // We build the full URL to our backend
-                    src={`${API_BASE_URL}${game.coverImage}`} 
+                    // Full URL to the image
+                    src={game.coverImage}
+                    className="card-img-top-custom"
                     style={{ maxHeight: '150px', objectFit: 'cover' }}
                   />
                 )}

@@ -46,11 +46,9 @@ function App() {
   const [currentGame, setCurrentGame] = useState(null);
   // State to hold the data *inside* the edit form
   const [editFormData, setEditFormData] = useState({
-
     name: '',
     platform: 'PC',
     status: '',
-
   });
 
   // State for Edit form's file
@@ -63,8 +61,7 @@ function App() {
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showLoginToast, setShowLoginToast] = useState(false);
 
-// Helper functions for Modals
-
+  // Helper functions for Modals
   const handleCloseAddModal = () => {
     setShowAddModal(false);
     setCoverImageFile(null); // Clear file on close
@@ -75,14 +72,22 @@ function App() {
     setEditFormData({ ...editFormData, [name]: value });
   };
   const handleShowEditModal = (game) => {
-    setCurrentGame(game); setEditFormData(game); setShowEditModal(true);
+    setCurrentGame(game);
+    setEditFormData(game);
+    setShowEditModal(true);
   };
   const handleCloseEditModal = () => {
-    setShowEditModal(false); setCurrentGame(null); setEditCoverImageFile(null);
+    setShowEditModal(false);
+    setCurrentGame(null);
+    setEditCoverImageFile(null);
   };
   // Helper functions for File Inputs
-  const handleAddFileChange = (event) => { setCoverImageFile(event.target.files[0]); };
-  const handleEditFileChange = (event) => { setEditCoverImageFile(event.target.files[0]); };
+  const handleAddFileChange = (event) => {
+    setCoverImageFile(event.target.files[0]);
+  };
+  const handleEditFileChange = (event) => {
+    setEditCoverImageFile(event.target.files[0]);
+  };
 
   // DATA FETCHING (GET)
   // This 'useEffect' hook runs ONCE when the component first loads
@@ -119,7 +124,6 @@ function App() {
     }
 
     try {
-
       // 4. Send the 'formData' object, not a regular JSON 
       const response = await axios.post(API_GAMES_URL, formData, {
         headers: {
@@ -136,7 +140,6 @@ function App() {
       setCoverImageFile(null); // Clear file input
       // Close the modal after adding
       handleCloseAddModal();
-
     } catch (err) {
       console.error('Error creating game:', err);
     }
@@ -156,11 +159,9 @@ function App() {
     } catch (err) {
       console.error('Error deleting game:', err);
     }
-
   };
 
   // UPDATE (PUT)
-
   const handleUpdate = async (event) => {
     event.preventDefault();
     // Get the ID from the game we are editing
@@ -177,7 +178,6 @@ function App() {
     }
 
     try {
-
       // 4. Send the 'formData'
       const response = await axios.put(`${API_GAMES_URL}/${gameId}`, formData, {
         headers: {
@@ -190,7 +190,24 @@ function App() {
       // Find and replace the game in state
       setGames(games.map((game) => game._id === updatedGame._id ? updatedGame : game));
       handleCloseEditModal(); // Close modal
-    } catch (err) { console.error('Error updating game:', err); }
+    } catch (err) {
+      console.error('Error updating game:', err);
+    }
+  };
+
+  // Remove Cover Image handler
+  const handleRemoveImage = async () => {
+    const gameId = currentGame._id;
+    try {
+      const response = await axios.put(`${API_GAMES_URL}/${gameId}/remove-image`);
+      const updatedGame = response.data; // no coverImage
+      setGames(games.map((game) => 
+        game._id === updatedGame._id ? updatedGame : game
+      ));
+      handleCloseEditModal();
+    } catch (err) {
+      console.error('Error removing image:', err);
+    }
   };
 
   // DATA FILTERING 
@@ -202,7 +219,7 @@ function App() {
 
   // JSX RENDER
   return (
-     <div className="app-layout">
+    <div className="app-layout">
       {/* Header*/}
       <Navbar variant="dark" className="app-header">
         <Container fluid>
@@ -220,7 +237,6 @@ function App() {
       </Navbar>
 
       {/* Main App Content */}
-
       <Container className="my-4">
         {/* "Add Game" Button */}
         <Stack direction="horizontal" className="mb-4">
@@ -234,64 +250,73 @@ function App() {
           </Button>
         </Stack>
 
-      {/* Games Grid */}
-      <Row>
-        {/* We map over all 4 columns */}
-        {[backlogGames, nextToPlayGames, playingGames, completedGames].map((list, index) => (
-          // Get column title based on index
-          <Col md={6} lg={3} className="mb-3" key={index}>
-            <h2 className="column-header">
-              {['Backlog', 'Next to Play', 'Playing', 'Completed'][index]}
-            </h2>
-            {list.map((game) => (
-              <Card key={game._id} className={`mb-3 ${getCardClassName(game.status)}`}>
-                {/* Display the cover image */}
-                {/* Check if 'game.coverImage' exists */}
-                {game.coverImage && (
-                  <Card.Img 
-                    variant="top" 
-                    // Full URL to the image
-                    src={game.coverImage}
-                    className="card-img-top-custom"
-                    style={{ maxHeight: '150px', objectFit: 'cover' }}
-                  />
-                )}
-                <Card.Body>
-                  <Card.Title className="h6">
+        {/* Games Grid */}
+        <Row>
+          {/* We map over all 4 columns */}
+          {[backlogGames, nextToPlayGames, playingGames, completedGames].map((list, index) => (
+            // Get column title based on index
+            <Col md={6} lg={3} className="mb-3" key={index}>
+              <h2 className="column-header">
+                {['Backlog', 'Next to Play', 'Playing', 'Completed'][index]}
+              </h2>
+              {list.map((game) => (
+                <Card key={game._id} className={`mb-3 ${getCardClassName(game.status)}`}>
+                  {/* Display the cover image */}
+                  {/* Check if 'game.coverImage' exists */}
+                  {game.coverImage && (
+                    <Card.Img 
+                      variant="top" 
+                      // Full URL to the image
+                      src={game.coverImage}
+                      className="card-img-top-custom"
+                      style={{ maxHeight: '150px', objectFit: 'cover' }}
+                    />
+                  )}
+                  <Card.Body>
+                    <Card.Title className="h6">
                       {game.name}
-                  </Card.Title>
-                  <Card.Text className="text-muted small">
+                    </Card.Title>
+                    <Card.Text className="text-muted small">
                       {game.platform}
-                  </Card.Text>
-                </Card.Body>
-                {/* Card Footer */}
-                <Card.Footer>
-                  <ButtonGroup size="sm" className="w-100">
-                    <Button variant="outline-dark" onClick={() => handleShowEditModal(game)}>Edit</Button>
-                    <Button variant="outline-danger" onClick={() => handleDelete(game._id)}>Delete</Button>
-                  </ButtonGroup>
-                </Card.Footer>
-              </Card>
-            ))}
-          </Col>
-        ))}
-      </Row>
-       </Container>
+                    </Card.Text>
+                  </Card.Body>
+                  {/* Card Footer */}
+                  <Card.Footer>
+                    <ButtonGroup size="sm" className="w-100">
+                      <Button variant="outline-dark" onClick={() => handleShowEditModal(game)}>Edit</Button>
+                      <Button variant="outline-danger" onClick={() => handleDelete(game._id)}>Delete</Button>
+                    </ButtonGroup>
+                  </Card.Footer>
+                </Card>
+              ))}
+            </Col>
+          ))}
+        </Row>
+      </Container>
+
       {/* Footer */}
       <footer className="app-footer">
         Mikita Tsybulka, 2025 
       </footer>
 
- {/* Add Game Modal /}
+      {/* Add Game Modal */}
       {/* Add Game form is in this Modal now */}
       <Modal show={showAddModal} onHide={handleCloseAddModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>Add a New Game</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-           {/* IMPORTANT (!): 'onSubmit' now runs 'handleAddGame' */}
+          {/* IMPORTANT (!): 'onSubmit' now runs 'handleAddGame' */}
           <Form onSubmit={handleAddGame}>
-            <Form.Group className="mb-3"><Form.Label>Game name</Form.Label><Form.Control type="text" value={gameName} onChange={(e) => setGameName(e.target.value)} required /></Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Game name</Form.Label>
+              <Form.Control 
+                type="text" 
+                value={gameName} 
+                onChange={(e) => setGameName(e.target.value)} 
+                required 
+              />
+            </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Platform</Form.Label>
               <Form.Select value={platform} onChange={(e) => setPlatform(e.target.value)}>
@@ -301,9 +326,26 @@ function App() {
                 <option value="Android">Android</option>
               </Form.Select>
             </Form.Group>
-            <Form.Group className="mb-3"><Form.Label>Status</Form.Label><Form.Select value={status} onChange={(e) => setStatus(e.target.value)}><option value="backlog">Backlog</option><option value="next-to-play">Next to Play</option><option value="playing">Playing</option><option value="completed">Completed</option></Form.Select></Form.Group>
-            <Form.Group className="mb-3"><Form.Label>Cover Image (Optional)</Form.Label><Form.Control type="file" name="coverImage" onChange={handleAddFileChange} /></Form.Group>
-            <Button variant="dark" type="submit" className="w-100">Add to Gamelog</Button>
+            <Form.Group className="mb-3">
+              <Form.Label>Status</Form.Label>
+              <Form.Select value={status} onChange={(e) => setStatus(e.target.value)}>
+                <option value="backlog">Backlog</option>
+                <option value="next-to-play">Next to Play</option>
+                <option value="playing">Playing</option>
+                <option value="completed">Completed</option>
+              </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Cover Image (Optional)</Form.Label>
+              <Form.Control 
+                type="file" 
+                name="coverImage" 
+                onChange={handleAddFileChange} 
+              />
+            </Form.Group>
+            <Button variant="dark" type="submit" className="w-100">
+              Add to Gamelog
+            </Button>
           </Form>
         </Modal.Body>
       </Modal>
@@ -317,25 +359,76 @@ function App() {
           <Modal.Body>
             {/* Should use 'handleUpdate' for submission */}
             <Form onSubmit={handleUpdate}>
-              <Form.Group className="mb-3"><Form.Label>Game name</Form.Label><Form.Control type="text" name="name" value={editFormData.name} onChange={handleEditFormChange} required /></Form.Group>
-               <Form.Group className="mb-3">
-              <Form.Label>Platform</Form.Label>
-              <Form.Select value={platform} onChange={(e) => setPlatform(e.target.value)}>
-                <option value="PC">PC</option>
-                <option value="Xbox Series S/X">Xbox Series S/X</option>
-                <option value="PlayStation 5">PlayStation 5</option>
-                <option value="Android">Android</option>
-              </Form.Select>
-            </Form.Group>
-              <Form.Group className="mb-3"><Form.Label>Status</Form.Label><Form.Select name="status" value={editFormData.status} onChange={handleEditFormChange}><option value="backlog">Backlog</option><option value="next-to-play">Next to Play</option><option value="playing">Playing</option><option value="completed">Completed</option></Form.Select></Form.Group>
-              <Form.Group className="mb-3"><Form.Label>Change Cover Image (Optional)</Form.Label><Form.Control type="file" name="coverImage" onChange={handleEditFileChange} /></Form.Group>
-              <Stack direction="horizontal" gap={2}><Button variant="secondary" onClick={handleCloseEditModal}>Cancel</Button><Button variant="primary" type="submit" className="ms-auto">Save Changes</Button></Stack>
+              <Form.Group className="mb-3">
+                <Form.Label>Game name</Form.Label>
+                <Form.Control 
+                  type="text" 
+                  name="name" 
+                  value={editFormData.name} 
+                  onChange={handleEditFormChange} 
+                  required 
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Platform</Form.Label>
+                <Form.Select 
+                  name="platform" 
+                  value={editFormData.platform} 
+                  onChange={handleEditFormChange}
+                >
+                  <option value="PC">PC</option>
+                  <option value="Xbox Series S/X">Xbox Series S/X</option>
+                  <option value="PlayStation 5">PlayStation 5</option>
+                  <option value="Android">Android</option>
+                </Form.Select>
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Status</Form.Label>
+                <Form.Select 
+                  name="status" 
+                  value={editFormData.status} 
+                  onChange={handleEditFormChange}
+                >
+                  <option value="backlog">Backlog</option>
+                  <option value="next-to-play">Next to Play</option>
+                  <option value="playing">Playing</option>
+                  <option value="completed">Completed</option>
+                </Form.Select>
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Change Cover Image (Optional)</Form.Label>
+                <Form.Control 
+                  type="file" 
+                  name="coverImage" 
+                  onChange={handleEditFileChange} 
+                />
+              </Form.Group>
+              {currentGame.coverImage && (
+                <Form.Group className="mb-3">
+                  <Button 
+                    variant="danger" 
+                    size="sm" 
+                    onClick={handleRemoveImage}
+                    type="button" // button' to prevent form submission
+                  >
+                    Remove Current Image
+                  </Button>
+                </Form.Group>
+              )}
+              <Stack direction="horizontal" gap={2}>
+                <Button variant="secondary" onClick={handleCloseEditModal}>
+                  Cancel
+                </Button>
+                <Button variant="primary" type="submit" className="ms-auto">
+                  Save Changes
+                </Button>
+              </Stack>
             </Form>
           </Modal.Body>
         </Modal>
       )}
 
-   {/* About Modal */}
+      {/* About Modal */}
       <Modal show={showAboutModal} onHide={() => setShowAboutModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>About Gamelog App</Modal.Title>
@@ -343,22 +436,26 @@ function App() {
         <Modal.Body>
           <p>This is a course project for ITMD 504 - Programing and Application Foundations</p>
           <p>Created by: <strong>Mikita Tsybulka</strong>.</p>
-          <p>For any questions, please contact:<br />
+          <p>
+            For any questions, please contact:<br />
             <a href="mailto:mtsybulka@hawk.illinoistech.edu">mtsybulka@hawk.illinoistech.edu</a>
           </p>
         </Modal.Body>
       </Modal>
+
       {/* Login Toast */}
       <ToastContainer position="top-end" className="p-3" style={{ zIndex: 1056 }}>
         <Toast onClose={() => setShowLoginToast(false)} show={showLoginToast} delay={3000} autohide>
           <Toast.Header>
             <strong className="me-auto">Login</strong>
           </Toast.Header>
-          <Toast.Body>Login functionality is currently in development, please try again later</Toast.Body>
+          <Toast.Body>
+            Login functionality is currently in development, please try again later
+          </Toast.Body>
         </Toast>
       </ToastContainer>
     </div>
-    );
+  );
 }
 
 export default App;

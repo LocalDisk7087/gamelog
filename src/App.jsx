@@ -6,9 +6,9 @@ import './App.css';
 import axios from 'axios'; 
 
 // Import all the components we need from react-bootstrap, added new components
-import { Container, Row, Col, Card, Form, Button, Modal, ButtonGroup, Stack } from 'react-bootstrap';
+import { Container, Row, Col, Card, Form, Button, Modal, ButtonGroup, Stack, Navbar, Nav, Toast, ToastContainer } from 'react-bootstrap';
 
-// Since I don't have a server yet, I run the backend locally on port 5001
+// Now we have BE URL defined here (Render.com)
 const API_BASE_URL = 'https://be-for-gamelog.onrender.com';
 // Second URL os for games API
 const API_GAMES_URL = `${API_BASE_URL}/api/games`;
@@ -35,7 +35,7 @@ function App() {
 
   // Form state for adding a new game
   const [gameName, setGameName] = useState('');
-  const [platform, setPlatform] = useState('');
+  const [platform, setPlatform] = useState('PC');
   const [status, setStatus] = useState('backlog');
 
   // Status for Add form's file
@@ -48,7 +48,7 @@ function App() {
   const [editFormData, setEditFormData] = useState({
 
     name: '',
-    platform: '',
+    platform: 'PC',
     status: '',
 
   });
@@ -59,11 +59,30 @@ function App() {
   // State for ADD Modal
   // This will control "Add Game" popup
   const [showAddModal, setShowAddModal] = useState(false);
+  // Stats for About and Login modals
+  const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showLoginToast, setShowLoginToast] = useState(false);
+
+// Helper functions for Modals
+
   const handleCloseAddModal = () => {
     setShowAddModal(false);
     setCoverImageFile(null); // Clear file on close
   };
   const handleShowAddModal = () => setShowAddModal(true);
+  const handleEditFormChange = (event) => {
+    const { name, value } = event.target;
+    setEditFormData({ ...editFormData, [name]: value });
+  };
+  const handleShowEditModal = (game) => {
+    setCurrentGame(game); setEditFormData(game); setShowEditModal(true);
+  };
+  const handleCloseEditModal = () => {
+    setShowEditModal(false); setCurrentGame(null); setEditCoverImageFile(null);
+  };
+  // Helper functions for File Inputs
+  const handleAddFileChange = (event) => { setCoverImageFile(event.target.files[0]); };
+  const handleEditFileChange = (event) => { setEditCoverImageFile(event.target.files[0]); };
 
   // DATA FETCHING (GET)
   // This 'useEffect' hook runs ONCE when the component first loads
@@ -167,49 +186,11 @@ function App() {
       });
 
       const updatedGame = response.data;
-      // 5. Update the 'games'
-      setGames(games.map((game) => 
-        game._id === updatedGame._id 
-          ? updatedGame 
-          : game
-      ));
-      handleCloseEditModal();
-    } catch (err) {
-      console.error('Error updating game:', err);
-    }
-  };
-
-  // Modal Helper Functions
-  // EDIT MODAL HELPER FUNCTIONS 
-
-  const handleEditFormChange = (event) => {
-    const { name, value } = event.target;
-    setEditFormData({
-      ...editFormData,
-      [name]: value,
-    });
-  };
-
-  // Runs when we click the "Edit" button on a card
-  const handleShowEditModal = (game) => {
-    setCurrentGame(game); 
-    setEditFormData(game); 
-    setShowEditModal(true); 
-  };
-
-  // This runs when we click "Close" or "Cancel"
-  const handleCloseEditModal = () => {
-    setShowEditModal(false);
-    setCurrentGame(null);
-    setEditCoverImageFile(null); // Clear file on close
-  };
-
-  // File input change handlers
- const handleAddFileChange = (event) => {
-    setCoverImageFile(event.target.files[0]);
-  };
-  const handleEditFileChange = (event) => {
-    setEditCoverImageFile(event.target.files[0]);
+      
+      // Find and replace the game in state
+      setGames(games.map((game) => game._id === updatedGame._id ? updatedGame : game));
+      handleCloseEditModal(); // Close modal
+    } catch (err) { console.error('Error updating game:', err); }
   };
 
   // DATA FILTERING 
@@ -221,19 +202,37 @@ function App() {
 
   // JSX RENDER
   return (
-    <Container className="my-4">
-        {/* Header */}
-      {/* Time to replace the old <h1> with a Button */}
-      <Stack direction="horizontal" className="mb-4">
-        <div>{/* Empty div pushes the button to the right */}</div>
-        <Button 
-          variant="light" 
-          onClick={handleShowAddModal} 
-          className="ms-auto"
-        >
-          Add a new game
-        </Button>
-      </Stack>
+     <div className="app-layout">
+      {/* Header*/}
+      <Navbar variant="dark" className="app-header">
+        <Container fluid>
+          {/* We use href="#" so it doesn't reload the page */}
+          <Navbar.Brand href="#" className="header-title-text">Gamelog App</Navbar.Brand>
+          <Nav className="ms-auto">
+            <Button variant="outline-light" size="sm" onClick={() => setShowAboutModal(true)} className="me-2">
+              About
+            </Button>
+            <Button variant="outline-light" size="sm" onClick={() => setShowLoginToast(true)}>
+              Login
+            </Button>
+          </Nav>
+        </Container>
+      </Navbar>
+
+      {/* Main App Content */}
+
+      <Container className="my-4">
+        {/* "Add Game" Button */}
+        <Stack direction="horizontal" className="mb-4">
+          <div></div>
+          <Button 
+            variant="light" 
+            onClick={handleShowAddModal} 
+            className="ms-auto"
+          >
+            Add a new game
+          </Button>
+        </Stack>
 
       {/* Games Grid */}
       <Row>
@@ -277,6 +276,11 @@ function App() {
           </Col>
         ))}
       </Row>
+       </Container>
+      {/* Footer */}
+      <footer className="app-footer">
+        Mikita Tsybulka, 2025 
+      </footer>
 
  {/* Add Game Modal /}
       {/* Add Game form is in this Modal now */}
@@ -287,39 +291,19 @@ function App() {
         <Modal.Body>
            {/* IMPORTANT (!): 'onSubmit' now runs 'handleAddGame' */}
           <Form onSubmit={handleAddGame}>
-            <Form.Group className="mb-3" controlId="game-name">
-              <Form.Label>Game name</Form.Label>
-               <Form.Control type="text" value={gameName} onChange={(e) => setGameName(e.target.value)} required />
-            </Form.Group>
-            <Form.Group className="mb-3" controlId="platform">
+            <Form.Group className="mb-3"><Form.Label>Game name</Form.Label><Form.Control type="text" value={gameName} onChange={(e) => setGameName(e.target.value)} required /></Form.Group>
+            <Form.Group className="mb-3">
               <Form.Label>Platform</Form.Label>
-               <Form.Control type="text" value={platform} onChange={(e) => setPlatform(e.target.value)} required />
-            </Form.Group>
-            <Form.Group className="mb-3" controlId="status">
-              <Form.Label>Status</Form.Label>
-              <Form.Select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                <option value="backlog">Backlog</option>
-                <option value="next-to-play">Next to Play</option>
-                <option value="playing">Playing</option>
-                <option value="completed">Completed</option>
+              <Form.Select value={platform} onChange={(e) => setPlatform(e.target.value)}>
+                <option value="PC">PC</option>
+                <option value="Xbox Series S/X">Xbox Series S/X</option>
+                <option value="PlayStation 5">PlayStation 5</option>
+                <option value="Android">Android</option>
               </Form.Select>
             </Form.Group>
-            
-            {/* File Input Field */}
-            <Form.Group className="mb-3" controlId="cover-image">
-              <Form.Label>Cover Image (Optional)</Form.Label>
-              <Form.Control 
-                type="file" 
-                name="coverImage"
-                onChange={handleAddFileChange} // Set the file state
-              />
-            </Form.Group>
-            <Button variant="dark" type="submit" className="w-100">
-              Add to Gamelog
-            </Button>
+            <Form.Group className="mb-3"><Form.Label>Status</Form.Label><Form.Select value={status} onChange={(e) => setStatus(e.target.value)}><option value="backlog">Backlog</option><option value="next-to-play">Next to Play</option><option value="playing">Playing</option><option value="completed">Completed</option></Form.Select></Form.Group>
+            <Form.Group className="mb-3"><Form.Label>Cover Image (Optional)</Form.Label><Form.Control type="file" name="coverImage" onChange={handleAddFileChange} /></Form.Group>
+            <Button variant="dark" type="submit" className="w-100">Add to Gamelog</Button>
           </Form>
         </Modal.Body>
       </Modal>
@@ -333,51 +317,48 @@ function App() {
           <Modal.Body>
             {/* Should use 'handleUpdate' for submission */}
             <Form onSubmit={handleUpdate}>
-              <Form.Group className="mb-3" controlId="edit-game-name">
-                <Form.Label>Game name</Form.Label>
-                <Form.Control type="text" name="name" value={editFormData.name} onChange={handleEditFormChange} required />
-              </Form.Group>
-              <Form.Group className="mb-3" controlId="edit-platform">
-                <Form.Label>Platform</Form.Label>
-                <Form.Control type="text" name="platform" value={editFormData.platform} onChange={handleEditFormChange} required />
-              </Form.Group>
-              <Form.Group className="mb-3" controlId="edit-status">
-                <Form.Label>Status</Form.Label>
-                <Form.Select
-                  name="status"
-                  value={editFormData.status}
-                  onChange={handleEditFormChange}
-                >
-                  <option value="backlog">Backlog</option>
-                  <option value="next-to-play">Next to Play</option>
-                  <option value="playing">Playing</option>
-                  <option value="completed">Completed</option>
-                </Form.Select>
-              </Form.Group>
-               {/*  File Input Field */}
-              <Form.Group className="mb-3" controlId="edit-cover-image">
-                <Form.Label>Change Cover Image (Optional)</Form.Label>
-                <Form.Control 
-                  type="file" 
-                  name="coverImage"
-                  onChange={handleEditFileChange} // Set the file state
-                />
-              </Form.Group>
-              {/* Buttons at the bottom of the modal */}
-              <Stack direction="horizontal" gap={2}>
-                <Button variant="secondary" onClick={handleCloseEditModal}>
-                  Cancel
-                </Button>
-                <Button variant="primary" type="submit" className="ms-auto">
-                  Save Changes
-                </Button>
-              </Stack>
+              <Form.Group className="mb-3"><Form.Label>Game name</Form.Label><Form.Control type="text" name="name" value={editFormData.name} onChange={handleEditFormChange} required /></Form.Group>
+               <Form.Group className="mb-3">
+              <Form.Label>Platform</Form.Label>
+              <Form.Select value={platform} onChange={(e) => setPlatform(e.target.value)}>
+                <option value="PC">PC</option>
+                <option value="Xbox Series S/X">Xbox Series S/X</option>
+                <option value="PlayStation 5">PlayStation 5</option>
+                <option value="Android">Android</option>
+              </Form.Select>
+            </Form.Group>
+              <Form.Group className="mb-3"><Form.Label>Status</Form.Label><Form.Select name="status" value={editFormData.status} onChange={handleEditFormChange}><option value="backlog">Backlog</option><option value="next-to-play">Next to Play</option><option value="playing">Playing</option><option value="completed">Completed</option></Form.Select></Form.Group>
+              <Form.Group className="mb-3"><Form.Label>Change Cover Image (Optional)</Form.Label><Form.Control type="file" name="coverImage" onChange={handleEditFileChange} /></Form.Group>
+              <Stack direction="horizontal" gap={2}><Button variant="secondary" onClick={handleCloseEditModal}>Cancel</Button><Button variant="primary" type="submit" className="ms-auto">Save Changes</Button></Stack>
             </Form>
           </Modal.Body>
         </Modal>
       )}
-    </Container>
-  );
+
+   {/* About Modal */}
+      <Modal show={showAboutModal} onHide={() => setShowAboutModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>About Gamelog App</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>This is a course project for ITMD 504 - Programing and Application Foundations</p>
+          <p>Created by: <strong>Mikita Tsybulka</strong>.</p>
+          <p>For any questions, please contact:<br />
+            <a href="mailto:mtsybulka@hawk.illinoistech.edu">mtsybulka@hawk.illinoistech.edu</a>
+          </p>
+        </Modal.Body>
+      </Modal>
+      {/* Login Toast */}
+      <ToastContainer position="top-end" className="p-3" style={{ zIndex: 1056 }}>
+        <Toast onClose={() => setShowLoginToast(false)} show={showLoginToast} delay={3000} autohide>
+          <Toast.Header>
+            <strong className="me-auto">Login</strong>
+          </Toast.Header>
+          <Toast.Body>Login functionality is currently in development, please try again later</Toast.Body>
+        </Toast>
+      </ToastContainer>
+    </div>
+    );
 }
 
 export default App;

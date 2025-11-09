@@ -3,26 +3,56 @@
 
 /* Background from my figma design */
 body {
-  background-image:
-    radial-gradient(circle at 20% 50%, rgba(100, 150, 200, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(150, 100, 200, 0.1) 0%, transparent 50%),
-    linear-gradient(135deg, #0a0f1f 0%, #1a1f35 50%, #0d1425 100%);
+  background-image: url('./assets/background.jpg');
   background-attachment: fixed;
   background-size: cover;
+  background-position: center;
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Style for the "Track your gaming journey" header */
-.header-title {
-  background: rgba(255, 255, 255, 0.9);
-  padding: 12px 24px;
-  display: inline-block;
-  border-radius: 2px;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  color: #333;
+#root {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* Makes #root take up all available space */
+}
+
+/* For layout wrapper */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Full height */
+}
+/* For Header */
+.app-header {
+  /* A semi-transparent header */
+  background: rgba(26, 31, 53, 0.75);
+  backdrop-filter: blur(5px);
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.header-title-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+}
+
+.header-title-text:hover {
+  color: #ddd;
+}
+/* For Footer */
+.app-footer {
+  background: rgba(26, 31, 53, 0.75);
+  backdrop-filter: blur(5px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+  padding: 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  margin-top: auto; /* Pushes footer to the bottom */
 }
 
 /* Make bootstrap cards semi-transparent like in the design */
@@ -46,11 +76,11 @@ body {
 }
 
 .card-next-to-play {
-    background-color: rgba(220, 255, 220, 0.9) !important; /* Light green */
+    background-color: rgba(220, 255, 220, 0.9) !important; 
 }
 
 .card-playing {
-    background-color: rgba(230, 225, 255, 0.9) !important; /* Light purple */
+    background-color: rgba(230, 225, 255, 0.9) !important; 
 }
 
 .card-completed {

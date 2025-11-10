@@ -64,9 +64,17 @@ function App() {
   // Helper functions for Modals
   const handleCloseAddModal = () => {
     setShowAddModal(false);
-    setCoverImageFile(null); // Clear file on close
+    setCoverImageFile(null); // Clear file input when closing
   };
-  const handleShowAddModal = () => setShowAddModal(true);
+
+  const handleShowAddModal = () => {
+    // Reset form when opening modal, found a bug in the previous cod
+    setGameName('');
+    setPlatform('PC');
+    setStatus('backlog');
+    setCoverImageFile(null);
+    setShowAddModal(true);
+  };
   const handleEditFormChange = (event) => {
     const { name, value } = event.target;
     setEditFormData({ ...editFormData, [name]: value });
@@ -109,22 +117,18 @@ function App() {
 
   // EVENT HANDLERS (CREATE, UPDATE, DELETE)
   // Create (POST)
-  const handleAddGame = async (event) => {
+   const handleAddGame = async (event) => {
     event.preventDefault();
-
-    // 1. Use FormData to send files
     const formData = new FormData();
-    // 2. Add all out text data
     formData.append('name', gameName);
-    formData.append('platform', platform);
-    formData.append('status', status);
-    // 3. Add the file, if there is one
-    if (coverImageFile) {
-      formData.append('coverImage', coverImageFile);
+    formData.append('platform', platform); 
+    formData.append('status', status);     
+    if (coverImageFile) { 
+      formData.append('coverImage', coverImageFile); 
     }
 
     try {
-      // 4. Send the 'formData' object, not a regular JSON 
+      // Send the 'formData' object, not a regular JSON 
       const response = await axios.post(API_GAMES_URL, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',

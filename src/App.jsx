@@ -136,14 +136,7 @@ function App() {
       });
 
       setGames([response.data, ...games]); // Add new game to the top of the list
-    
-      // 5. Clear the form
-      setGameName('');
-      setPlatform('');
-      setStatus('backlog');
-      setCoverImageFile(null); // Clear file input
-      // Close the modal after adding
-      handleCloseAddModal();
+      handleCloseAddModal(); // Close the modal, fixed the old modal not closing issue
     } catch (err) {
       console.error('Error creating game:', err);
     }
